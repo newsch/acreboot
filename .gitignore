@@ -3,4 +3,8 @@ data
 # jupyter notebooks
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
-
+"Class and Room Categorization - Classes Fall 2017.csv"
+"Class and Room Categorization - Classes Spring 2018 csv"
+.DS_Store
+__pycache__
+figs
