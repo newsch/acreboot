@@ -17,7 +17,7 @@ def strip_header_serial(fp):
         with open(new_filepath, 'w') as outfile:
             infile.readline()  # skip first line
             headers = HEADER_PATTERN.findall(infile.readline())
-            headers = ['"'+h[0]+'"' for h in headers]  # remove serial number mentions
+            headers = ['"'+h[0]+'"' for h in headers]  # remove serial number mentionsastimezone
             outfile.writelines(','.join(headers) + '\n' + infile.read())
     return new_filepath
 
@@ -25,11 +25,13 @@ def strip_header_serial(fp):
 def process_data(filepath):
     with open(filepath) as file:
         data = pd.read_csv(file,header=0)
+    eastern = pytz.timezone('US/Eastern')
     data.index = pd.to_datetime(data['Date Time, GMT-04:00'], format='%m/%d/%y %I:%M:%S %p')
-    data.index = data.index.tz_localize(pytz.timezone('GMT')).tz_convert(pytz.timezone('US/Eastern'))  # https://stackoverflow.com/questions/22800079/converting-time-zone-pandas-dataframe
+    data.index = (data.index + pd.to_timedelta(4, 'h')).tz_localize(pytz.timezone('GMT')).tz_convert(eastern)  # https://stackoverflow.com/questions/22800079/converting-time-zone-pandas-dataframe
     del data.index.name
     del data['Date Time, GMT-04:00']
     data['dayofweek'] = data.index.dayofweek
+    data['date'] = data.index.normalize()
     return data
 
 
@@ -40,5 +42,5 @@ def convert_to_length(data, col):
 
 
 def agg_week(data, col):
-    view = data[data[col] > 0].groupby('dayofweek')['delta'].agg('sum')
+    view = data[data[col] == 0].groupby('dayofweek')['delta'].agg('sum')
     return view
