@@ -44,3 +44,28 @@ def convert_to_length(data, col):
 def agg_week(data, col):
     view = data[data[col] == 0].groupby('dayofweek')['delta'].agg('sum')
     return view
+
+def plot_by_day(data, col):
+    start = data[:1].index.date[0]
+    end = data[-1:].index.date[0]
+
+    day_totals = get_weekday_count(start, end)
+    data_by_day = agg_week(convert_to_length(data, col), col)
+    print(sum(data_by_day / day_totals / np.timedelta64(1, 'h')))
+    print(sum((data_by_day / day_totals / np.timedelta64(1, 'h'))[0:5]))
+    fig = plt.figure()
+    plt.bar(
+        data_by_day.index,
+        data_by_day / day_totals / np.timedelta64(1, 'h'),
+    )
+    plt.xticks(range(7), ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
+    plt.xlabel('Day of Week')
+    fig.patch.set_facecolor('white')  # needed for dark theme https://stackoverflow.com/questions/14088687/how-to-change-plot-background-color
+    return fig
+
+
+def get_weekday_count(start, end):
+    days = pd.DataFrame(pd.date_range(start=start, end=end, freq='D', tz='US/Eastern'), columns=['date'])
+    days['dayofweek'] = days['date'].dt.dayofweek
+    day_totals = days.groupby('dayofweek')['date'].agg('count')  # total number of each day of the week
+    return day_totals
